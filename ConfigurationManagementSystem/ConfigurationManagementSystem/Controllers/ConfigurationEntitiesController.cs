@@ -26,17 +26,39 @@ public class ConfigurationEntitiesController : ControllerBase
     [HttpPost("Create")]
     public async Task<IActionResult> Create(ConfigurationEntity entity)
     {
-        _repository.Add(entity);
-        await _repository.SaveChangesAsync();
+        try
+        {
+            _repository.Add(entity);
+            await _repository.SaveChangesAsync();
+        }
+        catch (Exception)
+        {
+            return Ok(entity);
+        }
 
         return Ok(entity);
     }
 
     [HttpPost("Update")]
-    public  IActionResult Update(ConfigurationEntity entity)
+    public async Task<IActionResult> Update(ConfigurationEntity entity)
     {
-		_repository.SaveChangesAsync();
-		return Ok();
+        var existing = await FindAsync(entity.Key);
+
+        if (existing == null)
+            return NotFound();
+
+        existing = entity;
+
+        await _repository.SaveChangesAsync();
+        return Ok(entity);
+    }
+
+    private async Task<ConfigurationEntity> FindAsync(string key)
+    {
+        using (_repository)
+        {
+            return await _repository.GetByKeyAsync(key);
+        }
     }
 
     [HttpPost("Delete")]
@@ -46,4 +68,5 @@ public class ConfigurationEntitiesController : ControllerBase
 
         return Ok();
     }
+
 }
